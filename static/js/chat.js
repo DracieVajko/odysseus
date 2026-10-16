@@ -2275,6 +2275,17 @@ import { invalidateSettings } from './appConfig.js';
       if (_ttftDisplayTimer) clearInterval(_ttftDisplayTimer);
       _ttftDisplayTimer = null;
     };
+    // True once the provider has emitted ANY token, reasoning included.
+    // `delta` alone is not that signal: a reasoning channel can arrive with an
+    // empty delta (harmony channel markers for gpt-oss route through thinking
+    // with no visible text), and some servers drop the reasoning text entirely.
+    // Gating the wait state on `delta` alone leaves the spinner claiming
+    // "waiting for first token" / "pre-filling context" while the model
+    // generates thousands of reasoning tokens.
+    const _providerEmittedOutput = (json) => (
+      (typeof json.delta === 'string' && json.delta.length > 0)
+      || !!json.thinking
+    );
     const clearFirstTokenWaitTimers = () => {
       firstTokenWaitTimers.forEach(t => { try { clearTimeout(t); } catch (_) {} });
       firstTokenWaitTimers = [];
@@ -4017,10 +4028,16 @@ import { invalidateSettings } from './appConfig.js';
                 if (spinner && spinner.element) spinner.destroy();
                 break;
               }
-              if (json.delta || json.type === 'final_response' || json.type === 'agent_prep' || json.type === 'tool_approval_resolved' || json.type === 'generated_image' || json.type === 'tool_start' || json.type === 'tool_output' || json.type === 'tool_progress' || json.type === 'editor_progress' || json.type === 'agent_step' || json.type === 'loop_breaker_triggered' || json.type === 'intent_nudge_exhausted' || json.type === 'doc_stream_open' || json.type === 'doc_stream_delta' || json.type === 'research_progress') {
+              if (_providerEmittedOutput(json) || json.type === 'final_response' || json.type === 'agent_prep' || json.type === 'tool_approval_resolved' || json.type === 'generated_image' || json.type === 'tool_start' || json.type === 'tool_output' || json.type === 'tool_progress' || json.type === 'editor_progress' || json.type === 'agent_step' || json.type === 'loop_breaker_triggered' || json.type === 'intent_nudge_exhausted' || json.type === 'doc_stream_open' || json.type === 'doc_stream_delta' || json.type === 'research_progress') {
                 clearResponseTimeout();
                 clearProcessingProbe();
                 clearFirstTokenWaitTimers();
+                // Reasoning-only output is not visible text, so it must not claim
+                // a first-visible-token TTFT metric — but it does mean the model
+                // is producing, so the escalating wait copy has to stop.
+                if (!!json.thinking && !(typeof json.delta === 'string' && json.delta.length > 0)) {
+                  _stopTtftDisplay();
+                }
               }
               if (json.type === 'generated_image') {
                 _rememberGeneratedImage(json);
