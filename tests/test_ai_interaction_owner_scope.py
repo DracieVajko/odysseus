@@ -26,9 +26,14 @@ def test_model_listing_and_image_fallback_are_owner_scoped():
     assert "owner: Optional[str] = None" in list_body
     assert "owner_filter(query, ModelEndpoint, owner)" in list_body
     # _resolve_model is offloaded to a worker thread (#4589) but stays owner-scoped.
-    assert "asyncio.to_thread(_resolve_model, candidate, owner=owner)" in image_body
+    # Auto-detect probe: extra model_type/endpoint_id kwargs may follow owner=owner.
+    assert "_resolve_model, candidate, owner=owner" in image_body
     assert "owner_filter(_img_q, ModelEndpoint, owner)" in image_body
-    assert "asyncio.to_thread(_resolve_model, model_spec, owner=owner)" in image_body
+    # The configured-model path goes through _resolve_image_model(), which forwards
+    # owner unchanged; assert the helper and its offload rather than a call site.
+    assert "def _resolve_image_model(model_name: str):" in image_body
+    assert "model_name, owner=owner" in image_body
+    assert "return await asyncio.to_thread(_call)" in image_body
 
 
 # chat_with_model, list_models and ask_teacher moved to the registry (#3629)

@@ -1201,6 +1201,10 @@ async def do_generate_image(content: str, session_id: Optional[str] = None, owne
     if not _settings.get("image_gen_enabled", True):
         return {"error": "Image generation is disabled by the administrator."}
 
+    # Resolved unconditionally: _resolve_image_model() below closes over it
+    # even when the tool call supplied its own model spec.
+    _image_endpoint_id = (_settings.get("image_endpoint_id", "") or "").strip()
+
     # Use admin-configured model/quality if not specified by the tool call
     if not model_spec:
         model_spec = _settings.get("image_model", "")
