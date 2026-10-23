@@ -153,3 +153,27 @@ async def test_tool_approval_mode_accepts_only_supported_values(monkeypatch):
         )
 
     assert exc_info.value.status_code == 400
+
+@pytest.mark.asyncio
+async def test_settings_expose_gate_env_kill_switch_to_admins_only(monkeypatch):
+    store = dict(settings_mod.DEFAULT_SETTINGS)
+
+    monkeypatch.setattr(auth_routes, "migrate_from_settings", lambda: None)
+    monkeypatch.setattr(auth_routes, "_load_settings", lambda: dict(store))
+
+    router = auth_routes.setup_auth_routes(_AuthManager())
+    get_settings = _route(router, "/api/auth/settings", "GET")
+
+    monkeypatch.setattr(auth_routes.tool_capabilities, "TOOL_APPROVAL_GATE_ENABLED", True)
+    response = await get_settings(_Request(admin=True))
+    assert response["tool_approval_gate_env_disabled"] is False
+
+    monkeypatch.setattr(auth_routes.tool_capabilities, "TOOL_APPROVAL_GATE_ENABLED", False)
+    response = await get_settings(_Request(admin=True))
+    assert response["tool_approval_gate_env_disabled"] is True
+    # The stored setting itself is untouched by the env kill-switch.
+    assert response["tool_approval_mode"] == "ask"
+
+    # Unauthenticated/scrubbed callers must not learn the deployment gate state.
+    response = await get_settings(_Request())
+    assert "tool_approval_gate_env_disabled" not in response

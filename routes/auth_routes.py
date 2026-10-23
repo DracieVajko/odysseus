@@ -18,6 +18,7 @@ from src.constants import DEEP_RESEARCH_DIR, MEMORY_FILE, PASSWORD_MIN_LENGTH, S
 from src.auth_helpers import _auth_disabled
 from src.rate_limiter import RateLimiter
 from src.settings_scrub import scrub_settings
+from src import tool_capabilities
 from src.settings import (
     load_settings as _load_settings,
     save_settings as _save_settings,
@@ -753,6 +754,11 @@ def setup_auth_routes(auth_manager: AuthManager) -> APIRouter:
         user = _get_current_user(request)
         settings = without_retired_settings(_load_settings())
         if _auth_disabled() or (user and auth_manager.is_admin(user)):
+            # Deployment-level truth for the Tool approval row: a falsy
+            # ODYSSEUS_TOOL_APPROVAL_GATE disables the approval gate for every
+            # run regardless of the stored tool_approval_mode, so surface it to
+            # admins instead of letting the row mislead them the other way.
+            settings["tool_approval_gate_env_disabled"] = not tool_capabilities.TOOL_APPROVAL_GATE_ENABLED
             return settings
         return scrub_settings(settings)
 

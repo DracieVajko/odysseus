@@ -24,6 +24,17 @@ export async function initAgentSettings() {
       approvalModeInput.value =
         settings.tool_approval_mode === 'auto' ? 'auto' : 'ask';
     }
+    var approvalEnvNote = el('set-toolApprovalEnvNote');
+    if (approvalEnvNote) {
+      if (settings.tool_approval_gate_env_disabled) {
+        approvalEnvNote.textContent =
+          'Forced by deployment: ODYSSEUS_TOOL_APPROVAL_GATE is set to a falsy value on this server, so the approval gate is off for every run regardless of this setting.';
+        approvalEnvNote.style.display = 'block';
+      } else {
+        approvalEnvNote.textContent = '';
+        approvalEnvNote.style.display = 'none';
+      }
+    }
   } catch (e) {}
 
   // Clamp + coerce a raw input to an int in [lo, hi]; falls back to `dflt`
