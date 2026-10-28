@@ -776,7 +776,7 @@ def setup_auth_routes(auth_manager: AuthManager) -> APIRouter:
             "auto_compact_threshold_percent": (50, 95),
         }
         _VALID_VALUES = {
-            "tool_approval_mode": {"ask", "auto"},
+            "tool_approval_mode": {"ask", "off"},
         }
         for key in DEFAULT_SETTINGS:
             if key in RETIRED_SETTING_KEYS:

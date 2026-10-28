@@ -530,7 +530,7 @@ def test_tool_approval_gate_respects_setting(monkeypatch):
         agent_loop,
         "get_setting",
         lambda key, default=None: (
-            "auto" if key == "tool_approval_mode" else default
+            "off" if key == "tool_approval_mode" else default
         ),
     )
     assert agent_loop._tool_approval_gate_bypassed() is True

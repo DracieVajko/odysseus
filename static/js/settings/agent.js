@@ -22,7 +22,7 @@ export async function initAgentSettings() {
     if (supInput) supInput.checked = !!settings.agent_supervisor_ladder;
     if (approvalModeInput) {
       approvalModeInput.value =
-        settings.tool_approval_mode === 'auto' ? 'auto' : 'ask';
+        settings.tool_approval_mode === 'off' ? 'off' : 'ask';
     }
     var approvalEnvNote = el('set-toolApprovalEnvNote');
     if (approvalEnvNote) {
@@ -55,7 +55,7 @@ export async function initAgentSettings() {
     if (supInput) payload.agent_supervisor_ladder = !!supInput.checked;
     if (approvalModeInput) {
       payload.tool_approval_mode =
-        approvalModeInput.value === 'auto' ? 'auto' : 'ask';
+        approvalModeInput.value === 'off' ? 'off' : 'ask';
     }
     try {
       await _postSettings(payload);

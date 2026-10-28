@@ -136,10 +136,10 @@ async def test_tool_approval_mode_accepts_only_supported_values(monkeypatch):
     set_settings = _route(router, "/api/auth/settings", "POST")
 
     response = await set_settings(
-        _Request({"tool_approval_mode": "auto"}, admin=True)
+        _Request({"tool_approval_mode": "off"}, admin=True)
     )
-    assert response["tool_approval_mode"] == "auto"
-    assert store["tool_approval_mode"] == "auto"
+    assert response["tool_approval_mode"] == "off"
+    assert store["tool_approval_mode"] == "off"
 
     response = await set_settings(
         _Request({"tool_approval_mode": "ask"}, admin=True)

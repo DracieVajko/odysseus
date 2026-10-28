@@ -16972,12 +16972,12 @@ def _tool_approval_gate_bypassed(
 ) -> bool:
     """Return whether the post-external-context tool approval gate is bypassed.
 
-    ``tool_approval_mode=auto`` (admin setting, Settings → Agent Tools) bypasses
+    ``tool_approval_mode=off`` (admin setting, Settings → Agent Tools) bypasses
     the gate on every run, the same effect as ``ODYSSEUS_TOOL_APPROVAL_GATE=0``.
     A chat-session grant bypasses it only within the scope of its own task.
     """
     return (
-        get_setting("tool_approval_mode", "ask") == "auto"
+        get_setting("tool_approval_mode", "ask") == "off"
         or bool(exact_approval and exact_approval.allow_remaining_actions)
     )
 
